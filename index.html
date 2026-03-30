@@ -301,6 +301,8 @@
     return new Date(new Date().toLocaleString('en-US',{ timeZone:'Asia/Kuala_Lumpur' }));
   }
   function isCompanyOpenToday(companyId){
+    if (companyId === "RYB") return true; // ✅ RYB 每天开放
+    
     const target = COMPANY_OPEN_DAY[companyId] ?? 3;
     return getKLDate().getDay() === target;
   }
@@ -331,7 +333,9 @@
 
     const forced = sessionStorage.getItem('forceUnlock') === '1';
     const openDayNum = COMPANY_OPEN_DAY[companyId] ?? 3;
-    const openDayName = WEEKDAY_NAME[openDayNum];
+    const openDayName = companyId === "RYB"
+      ? "Everyday"
+      : WEEKDAY_NAME[openDayNum];
 
     // 更新顶部文案里的星期名
     if (dayEl) dayEl.textContent = openDayName;
@@ -398,7 +402,17 @@
     if (!gameStarted) return;
     const big = document.getElementById('bigRedPacket');
     if (!big || big.dataset.lock === '1') return;
-    if (localStorage.getItem('hasClaimedReward')) { alert('Reward already claimed.'); return; }
+    const now = getKLDate();
+    const today = now.getFullYear() + '-' +
+      String(now.getMonth()+1).padStart(2,'0') + '-' +
+      String(now.getDate()).padStart(2,'0');
+
+    const key = `claimed_${today}`;
+
+    if (localStorage.getItem(key)) {
+      alert('Reward already claimed today.');
+      return;
+   }
 
     big.dataset.lock = '1';
     big.classList.add('opening');
@@ -459,7 +473,7 @@
       captchaEl.dataset.code = captchaCode;
       captchaEl.style.display = 'block';
     });
-    localStorage.setItem('hasClaimedReward', '1');
+    localStorage.setItem(key, '1');
     big.style.pointerEvents = 'none';
   }
 
